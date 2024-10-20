@@ -64,6 +64,17 @@ class tg:
         abs_path = os.path.join(current_dir,path)
         if self.token and self.chat_id:
             asyncio.run(send_telegram_video(abs_path, self.token, self.chat_id))
+
+    async def notify_async(self, message="Рендеринг завершен."):
+        """Отправить сообщение в Telegram после завершения рендеринга.""" 
+        if self.token and self.chat_id:
+            await send_telegram_message(message, self.token, self.chat_id)
+        
+    async def video_async(self, path="media/videos/1080p60/Tunneling3D.mp4"):
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        abs_path = os.path.join(current_dir,path)
+        if self.token and self.chat_id:
+            await send_telegram_video(abs_path, self.token, self.chat_id)
  
 
 

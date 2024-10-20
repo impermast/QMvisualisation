@@ -3,7 +3,7 @@ import numpy as np
 
 class Tunneling3D(ThreeDScene):
     def __init__(self,
-                 k=3, q=1, whattime=20, a=2,test_logic=False,
+                 k=3, q=1, whattime=1, a=2,test_logic=True,
                  axmin=-5, axmax=5, Num_of_points = 200,
                  title = Text("Задача 3. Туннельный эффект", font_size=60, color=WHITE),
                    **kwargs):
@@ -18,7 +18,19 @@ class Tunneling3D(ThreeDScene):
         self.xmax=axmax
         self.Num=Num_of_points
         self.title=title
-    
+    def get_default_params(self):
+        """Возвращает словарь с дефолтными параметрами класса."""
+        return {
+            "k": self.k,
+            "q": self.q,
+            "a": self.a,
+            "whattime": self.whattime,
+            "test_logic": self.test_logic,
+            "xmin": self.xmin,
+            "xmax": self.xmax,
+            "Num_of_points": self.Num,
+            "title": self.title
+        }    
     def create_axes(self):
         xmin = self.xmin
         xmax=self.xmax
@@ -61,13 +73,11 @@ class Tunneling3D(ThreeDScene):
     def psi(self, x, t):
         """Волновая функция"""  
         def A(k, w, a):
-            numerator = -2*(np.cosh(a * w)+ (1j*w/k) *np.sinh(a * w))
-            denominator = (1-w*w/(k*k))* np.sinh(a * w)
+            numerator = 2*(np.cosh(a * w)+ (1j*w/k) *np.sinh(a * w))
+            denominator = -2*(1j*w/k)*np.cosh(a * w)-(1-w*w/(k*k))* np.sinh(a * w)
             return numerator / denominator
         def B(k, w, a):
-            numerator = 2 * (np.sinh(a*w)-(1j*w/k)*np.cosh(a * w))
-            denominator = (1-w*w/(k*k))* np.sinh(a * w)
-            return numerator / denominator
+            return 2+ (1j*w/k)*A(k,w,a)
         def T(k, w, a):
             return (A(k,w,a)*np.sinh(a * w)+B(k, w, a)* np.cosh(a * w))
         def R(k, w, a):
@@ -145,9 +155,9 @@ class Tunneling3D(ThreeDScene):
         return VGroup(circle, dot)
     
     def construct(self):
-        self.play(Write(self.title))
-        self.wait(2)
-        self.play(FadeOut(self.title))
+        self.play(Write(self.title),run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(self.title),run_time=0.5)
 
         axes,labels = self.create_axes()
         print(f'test logic = {self.test_logic}')
@@ -179,10 +189,11 @@ class Tunneling3D(ThreeDScene):
                 run_time=2*self.whattime/5, rate_func=linear)  
             self.wait(0.5)
             self.play(FadeOut(VGroup(axes,labels)),FadeOut(psi_graph), FadeOut(axes),FadeOut(potent), run_time=1)
-
+            
+            self.set_camera_orientation(phi=0 * DEGREES, theta=-90 * DEGREES)
             thank_you_text = Text("Спасибо за внимание!", font_size=40, color=WHITE)
-            self.play(Write(thank_you_text))
-            self.wait(1)
-            self.play(FadeOut(thank_you_text))
+            self.play(Write(thank_you_text),run_time=1)
+            self.wait(0.5)
+            self.play(FadeOut(thank_you_text),run_time=0.5)
 
 
