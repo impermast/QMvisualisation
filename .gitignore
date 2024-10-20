@@ -1,0 +1,40 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment directories
+.venv/
+venv/
+env/
+*.env
+
+# IDE/Editor config files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Manim specific
+media/videos/
+media/
+*.log
+
+# Pango (если используется для шрифтов или других файлов)
+pango/
+
+# Local development settings
+*.local
+
+# Files created by pytest
+.cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Logs
+*.log
+
+# Configuration file with tokens or sensitive data
+config.json
