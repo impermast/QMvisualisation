@@ -59,9 +59,9 @@ class tg:
         if self.token and self.chat_id:
             asyncio.run(send_telegram_message(message, self.token, self.chat_id))
         
-    def video(self, path="media/videos/1080p60/Tunneling3D.mp4"):
+    def video(self, name, path="media/videos/1080p60/"):
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        abs_path = os.path.join(current_dir,path)
+        abs_path = os.path.join(current_dir,path+name+".mp4")
         if self.token and self.chat_id:
             asyncio.run(send_telegram_video(abs_path, self.token, self.chat_id))
 
@@ -70,9 +70,9 @@ class tg:
         if self.token and self.chat_id:
             await send_telegram_message(message, self.token, self.chat_id)
         
-    async def video_async(self, path="media/videos/1080p60/Tunneling3D.mp4"):
+    async def video_async(self, name, path="media/videos/1080p60/"):
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        abs_path = os.path.join(current_dir,path)
+        abs_path = os.path.join(current_dir,path+name+".mp4")
         if self.token and self.chat_id:
             await send_telegram_video(abs_path, self.token, self.chat_id)
  

@@ -19,6 +19,9 @@ class Sqeeze2D(ThreeDScene):
         self.a=a
         self.Num=Num_of_points
         self.title=title
+        self.class_name = self.__class__.__name__
+        self.t_value = ValueTracker(0)
+
     def get_default_params(self):
         """Возвращает словарь с дефолтными параметрами класса."""
         return {
@@ -57,8 +60,8 @@ class Sqeeze2D(ThreeDScene):
         """Определение осей 3D графика"""
         axes = ThreeDAxes(
             x_range=[xmin, xmax, 1],
-            y_range=[-1.2, 1.2, 1],
-            z_range=[-1.2, 1.2, 1],
+            y_range=[-0.1, 0.1, 0.1],
+            z_range=[-0.1, 0.1, 0.1],
             axis_config={"color": BLUE,
             "include_numbers": True},
         )
@@ -67,14 +70,14 @@ class Sqeeze2D(ThreeDScene):
             y_label=Tex(r"$Re(\psi)$"),  # Ось y — действительная часть
             z_label=Tex(r"$Im(\psi)$")   # Ось z — мнимая часть
         )
-        self.set_camera_orientation(phi=75 * DEGREES, theta=-120 * DEGREES)
+        self.set_camera_orientation(phi=85 * DEGREES, theta=-120 * DEGREES)
         return axes,labels
     
 
     def solution_text(self,size):
         """ Функция для отображения текста, который описывает решение"""
         textX = Tex(r"$\psi_0(x) = e^{\cfrac{i p_0 x}{\hbar}} e^{-\cfrac{(x - x_0)^2}{4 \sigma_x^2}} \left( \cfrac{1}{2 \pi \sigma_x^2} \right)^{1/4}$", font_size=size).to_edge(UL)
-        textP = Tex(r"$\psi_0(p) = e^{-\cfrac{i (p - p_0) x_0}{\hbar}} e^{-\cfrac{(p - p_0)^2}{4 \sigma_p^2}} \left( \cfrac{1}{2 \pi \sigma_p^2} \right)^{1/4}$", font_size=size).to_edge(UR)
+        textP = Tex(r"$\psi_0(p) = e^{-\cfrac{i (p - p_0) x_0}{\hbar}} e^{-\cfrac{(p - p_0)^2}{4 \sigma_p^2}} \left( \cfrac{1}{2 \pi \sigma_p^2} \right)^{1/4}$", font_size=size).next_to(textX, RIGHT)
         borderX = SurroundingRectangle(textX, color=WHITE, buff=0.1)
         borderP = SurroundingRectangle(textX, color=WHITE, buff=0.1)
         return VGroup(textX,textP),VGroup(borderX,borderP)
@@ -98,39 +101,42 @@ class Sqeeze2D(ThreeDScene):
         return exp_momentum/norm
     def complex_solution(self, x, p, t):
         E = p**2 / (2 *1)
-        psi = self.eigen_func(x, p) * np.exp(-1j * E * t)
+        psi = self.eigen_func(x, p) *self.psi_p(p, self.p0, self.x0, self.dp0)* np.exp(-1j * E * t)
         return psi
 
 
     def animate_single_solution(self, p):
-        t1=self.whattime
-        for t in np.linspace(0, 5*t1, self.Num):
-            curve = ParametricFunction(
-                lambda x: np.array([x, np.real(self.complex_solution(x, p, t)), np.imag(self.complex_solution(x, p, t))]),
+        t1 = self.whattime        
+        curve = always_redraw(
+            lambda: ParametricFunction(
+                lambda x: np.array([x, np.real(self.complex_solution(x, p, self.t_value.get_value())), 
+                                    np.imag(self.complex_solution(x, p, self.t_value.get_value()))]),
                 t_range=[-self.a, self.a],
                 color=RED
             )
-            self.play(Create(curve),run_time=t1)
-            self.wait(t1)
-        self.remove(curve)
+        )
+        self.play(Create(curve))
+        self.play(self.t_value.animate.set_value(5 * t1), run_time=5 * t1, rate_func=linear)
+        self.play(FadeOut(curve), run_time=t1)
+        
 
-    def animate_summed_solution(self, p_list):
-        t1=self.whattime
-        for t in np.linspace(0, 20*t1, self.num_frames):
-            total_real = np.zeros_like(x)
-            total_imag = np.zeros_like(x)
-            for p in p_list:
-                psi = self.complex_solution(x, p, t)
-                total_real += np.real(psi)
-                total_imag += np.imag(psi)
-
-            curve = ParametricFunction(
-                lambda x: np.array([x, total_real[x], total_imag[x]]),
-                t_range=[-self.a, self.a],
-                color=GREEN
+    def animate_multiple_solutions(self, p_vals):
+        t1 = self.whattime
+        curves = VGroup()
+        colors = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE]
+        for i,p in enumerate(p_vals):
+            curve = always_redraw(
+                lambda p=p: ParametricFunction(
+                    lambda x: np.array([x, np.real(self.complex_solution(x, p, self.t_value.get_value())), 
+                                        np.imag(self.complex_solution(x, p, self.t_value.get_value()))]),
+                    t_range=[-self.a, self.a],
+                    color=colors[i%6]
+                )
             )
-            self.play(Create(curve))
-            self.wait(0.1)
+            curves.add(curve)  # Добавляем кривую в группу
+        self.play(Create(curves))
+        self.play(self.t_value.animate.set_value(5 * t1), run_time=5 * t1, rate_func=linear)
+        self.play(FadeOut(curves), run_time=t1)
 
     
     def construct(self):
@@ -178,10 +184,12 @@ class Sqeeze2D(ThreeDScene):
         #Эволюция сф в 3D
         axes3,labels3 = self.create_axes3D()
         self.play(Create(axes3),Create(labels3),run_time=2*t1)
-        self.animate_single_solution(p_0)
+        p_vals = [p_0,p_0+1,p_0-1]
+        self.animate_multiple_solutions(p_vals)
         self.play(FadeOut(axes3), FadeOut(labels3),run_time = 2*t1)
         
-
+        #спасибо за внимание
+        self.set_camera_orientation(phi=0 * DEGREES, theta=-90 * DEGREES)
         thank_you_text = Text("Спасибо за внимание!", font_size=40, color=WHITE)
         self.play(Write(thank_you_text),run_time=t1)
         self.wait(1*t1)

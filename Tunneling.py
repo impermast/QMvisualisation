@@ -18,6 +18,9 @@ class Tunneling3D(ThreeDScene):
         self.xmax=axmax
         self.Num=Num_of_points
         self.title=title
+        self.class_name = self.__class__.__name__
+
+    
     def get_default_params(self):
         """Возвращает словарь с дефолтными параметрами класса."""
         return {
@@ -31,6 +34,7 @@ class Tunneling3D(ThreeDScene):
             "Num_of_points": self.Num,
             "title": self.title
         }    
+    
     def create_axes(self):
         xmin = self.xmin
         xmax=self.xmax

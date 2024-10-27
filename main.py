@@ -12,6 +12,7 @@ if __name__ == "__main__":
     }
     scene = Sqeeze2D(**params)
     scene.render()
+    name = scene.class_name
     print("Rendering over\nSending to tg\n")
     bot = tg()
-    bot.video()
+    bot.video(name)
