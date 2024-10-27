@@ -14,6 +14,7 @@ async def start(update, context):
     
     keyboard = [
         [InlineKeyboardButton("Параметры по умолчанию", callback_data='default')],
+        [InlineKeyboardButton("Видео из бэкапа", callback_data='backup')],
         [InlineKeyboardButton("Выбрать параметры", callback_data='custom')],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -33,6 +34,8 @@ async def button(update, context):
     elif query.data == 'custom':
         await query.edit_message_text(text="Отправь параметры в формате param=value.")
         context.user_data['awaiting_params'] = True
+    elif query.data == 'backup':
+        await send_video(update,context)
 
 async def custom_params(update, context):
     if context.user_data.get('awaiting_params'):
@@ -47,16 +50,20 @@ async def custom_params(update, context):
                         params[key] = value
                     
                 except ValueError:
-                    await update.message.edit_message_text(f"Ошибка в параметре: {arg}")
+                    await update.message.reply_text(f"Ошибка в параметре: {arg}")
                     return
         context.user_data['awaiting_params'] = False
         await render_scene(update, params)
+
+async def send_video(update,context):
+    bot = tg()
+    await bot.video_async()
 
 async def render_scene(update, params):
     await update.message.reply_text("Запуск рендеринга...")
     scene = Tunneling3D(**params)
     scene.render()
-    await update.message.edit_message_text("Рендеринг завершен.")
+    await update.message.reply_text("Рендеринг завершен.")
     bot = tg()
     await bot.video_async()
     
@@ -65,6 +72,7 @@ def main():
     token , _ = bot.get_token()
     application = Application.builder().token(token).build()
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("video", send_video))
     application.add_handler(CallbackQueryHandler(button))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, custom_params))
 

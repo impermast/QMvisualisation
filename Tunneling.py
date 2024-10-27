@@ -39,16 +39,16 @@ class Tunneling3D(ThreeDScene):
         axes = ThreeDAxes(
             
             x_range=[xmin, xmax, 1],
-            y_range=[-10, 10, 2],
-            z_range=[-10, 10, 2],
+            y_range=[-3, 4, 1],
+            z_range=[-3, 4, 1],
             axis_config={"color": BLUE,
             "include_numbers": True},
 
         )
         labels = axes.get_axis_labels(
             x_label=Tex("x"),    # Ось x
-            y_label=Tex("Re"),  # Ось y — действительная часть
-            z_label=Tex("Im")   # Ось z — мнимая часть
+            y_label=Tex(r"$Re(\psi)$"),  # Ось y — действительная часть
+            z_label=Tex(r"$Im(\psi)$")   # Ось z — мнимая часть
         )
         self.set_camera_orientation(phi=0 * DEGREES, theta=-90 * DEGREES)
         return axes,labels
@@ -61,7 +61,7 @@ class Tunneling3D(ThreeDScene):
             font_size=size,
             color=WHITE
         ).to_corner(UL) 
-        textM = Tex(r"$A \cosh(x) + B \sinh(x)$", font_size=size).to_edge(UP)
+        textM = Tex(r"$(A \cosh(x) + B \sinh(x)) e^(- \omega t)$", font_size=size).to_edge(UP)
         textR = Tex(r"$\psi(x,t) = T e^{i(kx - \omega t)}$", font_size=size).to_edge(UR)
         borderL = SurroundingRectangle(textL, color=WHITE, buff=0.1)
         borderM = SurroundingRectangle(textM, color=WHITE, buff=0.1)
@@ -104,7 +104,7 @@ class Tunneling3D(ThreeDScene):
         ]
         functions = [
             lambda x: 0, 
-            lambda x: 5,                     
+            lambda x: 2,                     
             lambda x: 0                                                 
         ]
         return np.piecewise(x, conditions, functions)
@@ -129,12 +129,12 @@ class Tunneling3D(ThreeDScene):
         xmax=self.xmax
         Num=self.Num 
         x_vals = np.linspace(xmin, xmax, Num)
-        y_vals = np.cos(-t_value)*np.real(self.psi(x_vals, t_value))
-        z_vals = np.sin(-t_value)*np.imag(self.psi(x_vals, t_value))
+        y_vals = np.cos(-self.k*t_value)*np.real(self.psi(x_vals, t_value))
+        z_vals = np.sin(-self.k*t_value)*np.imag(self.psi(x_vals, t_value))
         graph = axes.plot_line_graph(
             x_vals, y_vals, z_vals,
             line_color=RED, 
-            add_vertex_dots=True, vertex_dot_radius= 0.05, 
+            add_vertex_dots=True, vertex_dot_radius= 0.01, 
             vertex_dot_style=dict(fill_color=WHITE),
             stroke_width=4
         )
@@ -177,7 +177,7 @@ class Tunneling3D(ThreeDScene):
                 potent,
                 )
             self.play(Write(solution),Create(border))
-            self.wait(1)
+            self.wait(0.5)
             self.play(FadeOut(solution),FadeOut(border))
 
             self.play(Create(VGroup(axes,labels)))
