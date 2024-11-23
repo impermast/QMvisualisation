@@ -2,7 +2,7 @@ from manim import *
 import numpy as np
 from scipy.special import hermite
 
-class Oscilator2D(ThreeDScene):
+class Oscilator(ThreeDScene):
     def __init__(self,
                  n=1, w=1, whattime=1,a=5, 
                  test_logic=True,Num_of_points = 100,
@@ -17,6 +17,8 @@ class Oscilator2D(ThreeDScene):
         self.a=a
         self.Num=Num_of_points
         self.title=title
+        self.name = self.__class__.__name__
+
     def get_default_params(self):
         """Возвращает словарь с дефолтными параметрами класса."""
         return {
@@ -120,5 +122,5 @@ class Oscilator2D(ThreeDScene):
 
 
 if __name__ == "__main__":
-    scene = Oscilator2D()
+    scene = Oscilator()
     scene.render()

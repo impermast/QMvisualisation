@@ -2,9 +2,9 @@
 
 from tg_bot import tg
 import traceback
-from Tunneling import Tunneling3D
-from squeezestate import Sqeeze2D
-from Oscilator import Oscilator2D
+from Tunneling import Tunneling
+from Sqeeze import Sqeeze
+from Oscilator import Oscilator
 
 
 
@@ -13,10 +13,10 @@ if __name__ == "__main__":
         'whattime':1,
         'test_logic':False
     }
-    scene = Sqeeze2D(**params)
+    scene = Sqeeze(**params)
     name = scene.class_name
     bot = tg()
-    try:
+    try: 
         scene.render() 
         print("Rendering over\nSending to tg\n")
         bot.video(name)

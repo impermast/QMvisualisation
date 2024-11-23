@@ -9,11 +9,11 @@ class AngleChecker(ThreeDScene):
             y_label=Tex("y",font_size=40),  # Ось y — действительная часть
             z_label=Tex("z",font_size=40)   # Ось z — мнимая часть
         )
-        self.set_camera_orientation(phi=75 * DEGREES, theta=-205 * DEGREES)
+        self.set_camera_orientation(phi=105 * DEGREES, theta=-205 * DEGREES)
         self.add(axes,labels)
         self.wait()
 
-class Sqeeze2D(ThreeDScene):
+class Sqeeze(ThreeDScene):
     def __init__(self,
                  x0=-7, p0=10, dp0 = 2,
                  whattime=0.1,xaxis=10, 
@@ -30,7 +30,7 @@ class Sqeeze2D(ThreeDScene):
         self.xaxis=xaxis
         self.Num=Num_of_points
         self.title=title
-        self.class_name = self.__class__.__name__
+        self.name = self.__class__.__name__
         self.t_value = ValueTracker(0)
 
     def get_default_params(self):
@@ -47,16 +47,16 @@ class Sqeeze2D(ThreeDScene):
             "title": self.title
         }    
     
-    def Ending(self):
+    def Ending(self,fulltime):
         #спасибо за внимание
-        t1 = self.whattime
+        t1=fulltime/3
         self.set_camera_orientation(phi=0 * DEGREES, theta=-90 * DEGREES)
         thank_you_text = Text("Спасибо за внимание!", font_size=40, color=WHITE)
         self.play(Write(thank_you_text),run_time=t1)
         self.wait(1*t1)
         self.play(FadeOut(thank_you_text),run_time=t1)
-    def Starting(self):
-        t1 = self.whattime
+    def Starting(self,fulltime):
+        t1=fulltime/3
         #Название
         self.set_camera_orientation(phi=0 * DEGREES, theta=-90 * DEGREES)
         self.play(Write(self.title),run_time=t1)
@@ -111,8 +111,8 @@ class Sqeeze2D(ThreeDScene):
         borderP = SurroundingRectangle(textP, color=WHITE, buff=0.1)
         return VGroup(textX,textP),VGroup(borderX,borderP)
     
-    def explanation(self, text_size=0.35):
-        t1 = self.whattime
+    def explanation(self,fulltime, text_size=0.35):
+        t1 = fulltime/22
 
         solution,border = self.solution_text(40)
         self.play(Write(solution),Create(border),run_time=t1)
@@ -179,8 +179,9 @@ class Sqeeze2D(ThreeDScene):
         return psi/norm
 
     
-    def eigenFunc2D(self,colors):
-        t1 = self.whattime
+    def eigenFunc2D(self,fulltime,colors):
+        #4t1+12t1+4t1+12t1+2t1+t1+0.5t1+10t1+0.5t1=46t1
+        t1 = fulltime/46
         x_0 = self.x0
         p_0=self.p0
         sigma_x=self.dx0
@@ -190,7 +191,7 @@ class Sqeeze2D(ThreeDScene):
 
         axes,labels = self.create_axes2D()
         graphX = axes.plot(lambda x: np.real(self.psi(x,p_0,x_0,sigma_x)),
-                  color = RED_A, stroke_width=2)
+                  color = PURPLE_E, stroke_width=3)
         explanation_text = Text("Разложение по с.ф оператора p", font_size=20).shift(3 * UP + 4 * RIGHT)
         
         p_value = ValueTracker(p_0)
@@ -198,7 +199,7 @@ class Sqeeze2D(ThreeDScene):
         p_label = Text("p = ", font_size=26).next_to(p_value_display, LEFT)
         p_value_display.add_updater(lambda mob: mob.set_value(p_value.get_value()))
     
-        self.play(Create(axes),FadeIn(labels),Create(graphX),Write(explanation_text), run_time = 3*t1)
+        self.play(Create(axes),FadeIn(labels),Create(graphX),Write(explanation_text), run_time = t1)
         self.wait(2*t1)        
 
         #График разложения по с.ф 2D
@@ -206,48 +207,53 @@ class Sqeeze2D(ThreeDScene):
         p_vals = np.linspace(p_0-3,p_0+3,p_num)
         dp = p_vals[2]-p_vals[1]
 
-        amplitudes = np.array([2 if p < p_num/3 else 3 if p < 2*p_num/3 else 1 for p in p_vals])
+        amplitudes = np.array([2 if p < p_num/3 else 16 if p < 2*p_num/3 else 1 for p in p_vals])
         normalized_times = amplitudes / amplitudes.sum()
         self.play( Write(p_label), Create(p_value_display),run_time = t1)
+        
         for i, (p, norm_time) in enumerate(zip(p_vals, normalized_times)):
             self.play(p_value.animate.set_value(p), run_time=0.1 * t1)
             momfunc = axes.plot(
-                lambda x: np.real(self.complex_solution(x,p,0)),
+                lambda x: np.real(self.complex_solution(x, p, 0)),
                 color=colors[i % 6], stroke_width=5
             )
-            self.play(Create(momfunc), run_time=20 * t1 * norm_time) 
+            self.play(Create(momfunc), run_time=p_num * t1 * norm_time/2) 
             new_summed_graph = axes.plot(
                 lambda x: sum(np.real(self.complex_solution(x,p_val,0)*dp) for p_val in p_vals[:i+1]),
                 color=WHITE
             )
-            self.play(Transform(momfunc,summed_graph),Transform(summed_graph, new_summed_graph),FadeOut(momfunc), run_time= 4 * t1 * norm_time)
+            self.play(FadeTransform(momfunc,summed_graph),Transform(summed_graph, new_summed_graph), run_time= 4 * t1 * norm_time)
             self.wait(0.5*t1)
 
-        self.play(ReplacementTransform(summed_graph, graphX), run_time=4 * t1)
+        self.play(ReplacementTransform(summed_graph, graphX), run_time=2 * t1)
         self.play(FadeOut(explanation_text), FadeOut(p_label),FadeOut(summed_graph) , FadeOut(p_value_display), run_time=1 * t1)
 
+        explanation_text1 = Text("Эволюцию во времени В.Ф.", font_size=20).shift(3 * DOWN + 4 * RIGHT)
         anitime = ValueTracker(0)
         graphXT = always_redraw(lambda: axes.plot(
                 lambda x: np.real(self.total_solution(x, anitime.get_value())),
-                color=RED_A,
-                stroke_width=2
+                color=PURPLE_E,
+                stroke_width=6
             ))
-        self.play(Create(graphXT),FadeOut(graphX), run_time=0.5*t1)
-        self.play(anitime.animate.set_value(2), run_time=10 * t1, rate_func=linear)
-        self.play(FadeOut(axes), FadeOut(labels),FadeOut(graphXT),run_time = 1*t1)
+        self.play(Create(graphXT),FadeOut(graphX),Write(explanation_text1), run_time=0.5*t1)
+        self.play(anitime.animate.set_value(0.2),Unwrite(explanation_text1,reverse=False), run_time=1 * t1, rate_func=linear)
+        self.play(anitime.animate.set_value(2), run_time=9 * t1, rate_func=linear)
+        self.play(FadeOut(axes), FadeOut(labels),FadeOut(graphXT),run_time = 0.5*t1)
 
-    def TimeSolution3D(self,colors):
-        t1 = self.whattime
+    def TimeSolution3D(self,fulltime,colors):
+        t1 = fulltime/46
         p_0=self.p0
-    
+        #1+2+1+1+1+1+2  +1+5+1+5+4+10+10+1=46t1
         #Объясняющие тексты
         explanation_text1 = Text("У разных с.ф. разная частота вращения", font_size=int(30))
         explanation_text2 = Text("Эволюция полного решения — это не просто вращение в комплексной плоскости.", font_size=int(20))
+        explanation_text3 = Text("Рассмотрим анимацию эволюции с.ф в 3D", font_size=int(20)).shift(DOWN)
         self.play(Write(explanation_text1),run_time=t1)
         self.wait(2*t1)
         self.play(Transform(explanation_text1,explanation_text2),run_time=t1)
-        self.wait(2*t1)
-        self.play(FadeOut(explanation_text1,shift=DOWN),FadeOut(explanation_text2,shift=DOWN),run_time=t1)
+        self.play(Write(explanation_text3),run_time=t1)
+        self.wait(t1)
+        self.play(FadeOut(explanation_text1,shift=DOWN),FadeOut(explanation_text2,shift=DOWN),FadeOut(explanation_text3,shift=DOWN),run_time=t1)
 
 
         axes3, labels3 = self.create_axes3D()
@@ -266,7 +272,7 @@ class Sqeeze2D(ThreeDScene):
         self.play(self.t_value.animate.set_value(2), run_time=5 * t1, rate_func=linear)
 
         # Несколько графиков с.ф.
-        p_vals = np.linspace(p_0 - 3, p_0 + 3, 3)
+        p_vals = np.linspace(p_0 - 3, p_0 + 3, 2)
         curvesN = VGroup(curve1) 
         for i, p in enumerate(p_vals):
             curve = always_redraw(
@@ -294,36 +300,37 @@ class Sqeeze2D(ThreeDScene):
             )
         )
 
-        self.play(ReplacementTransform(curvesN, total_curve),FadeOut(curvesN),run_time=4 * t1)
-        self.add(total_curve)
-        self.play(e.animate.set_value(1),run_time=10 * t1)
+        self.play(ReplacementTransform(curvesN, total_curve), run_time=4 * t1)
+        
+        self.play(e.animate.set_value(0.5),run_time=5 * t1)
 
         # Анимация времени для итогового решения
-        self.move_camera(phi=65 * DEGREES, theta=-295 * DEGREES, 
-                         frame_center=[0, 0, 0], 
-                         added_anims=[e.animate(run_time=1 * t1).set_value(1.1)])
-        self.play(e.animate.set_value(2),run_time=9 * t1)
+        self.move_camera(phi=65 * DEGREES, theta=-205 * DEGREES, 
+                         frame_center=[0, 0, 0], run_time=15* t1,
+                         added_anims=[e.animate(run_time=15 * t1).set_value(2)])
 
         self.play(FadeOut(total_curve), FadeOut(axes3), FadeOut(labels3), run_time=t1)
+
+  
     
     def construct(self):
         colors = [RED_B, GREEN_B, GOLD_B, BLUE_B, PURPLE_B,YELLOW_B]
-
-        self.Starting()
+        tfactor=self.whattime
+        self.Starting(2)
         #Вступление с решением       
-        self.explanation()
+        self.explanation(16)
 
         #разложение по сф в 2д
-        self.eigenFunc2D(colors)
+        self.eigenFunc2D(40*tfactor,colors)
 
         #Эволюция сф в 3D
-        self.TimeSolution3D(colors)
+        self.TimeSolution3D(20*tfactor,colors)
 
-        self.Ending()
+        self.Ending(2)
         
 
 
 
 if __name__ == "__main__":
-    scene = Sqeeze2D(whattime=0.1)
+    scene = Sqeeze(whattime=0.2)
     scene.render()

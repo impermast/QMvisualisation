@@ -1,7 +1,7 @@
 from manim import *
 import numpy as np
 
-class Tunneling3D(ThreeDScene):
+class Tunneling(ThreeDScene):
     def __init__(self,
                  k=3, q=1, whattime=1, a=2,test_logic=True,
                  axmin=-5, axmax=5, Num_of_points = 200,
@@ -18,7 +18,7 @@ class Tunneling3D(ThreeDScene):
         self.xmax=axmax
         self.Num=Num_of_points
         self.title=title
-        self.class_name = self.__class__.__name__
+        self.name = self.__class__.__name__
 
     
     def get_default_params(self):
