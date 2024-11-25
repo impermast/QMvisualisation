@@ -16,8 +16,10 @@ env/
 *.sublime-workspace
 
 # Manim specific
-media/videos/
-media/
+media/videos/1080p60/partial_movie_files/
+media/images/
+media/Tex/
+media/texts/
 *.log
 
 # Pango (если используется для шрифтов или других файлов)
