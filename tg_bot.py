@@ -1,6 +1,7 @@
 import telegram
 import json
 import asyncio,os
+from telegram import error
 
 
 async def test_telegram_connection(bot):
@@ -13,6 +14,23 @@ async def test_telegram_connection(bot):
     print("Запускаю функцию")
     await bot.send_telegram_message("Тестовое сообщение")
     print("Тестовое сообщение отправлено")
+
+
+async def edit_or_send_msg(update, context, msg_txt,markup=None):
+    if update.message:
+        try:
+            if 'bot_message_id' in context.user_data:
+                await update.message.edit_text(text=msg_txt)
+                await update.message.edit_reply_markup(reply_markup=markup)
+            else:
+                sent_message = await update.message.reply_text(msg_txt, reply_markup=markup)
+                context.user_data['bot_message_id'] = sent_message.message_id
+        except error.BadRequest:
+            sent_message = await update.message.reply_text(msg_txt, reply_markup=markup)
+            context.user_data['bot_message_id'] = sent_message.message_id
+    elif update.callback_query:
+        sent_message = await update.callback_query.edit_message_text(msg_txt, reply_markup=markup)
+        context.user_data['bot_message_id'] = sent_message.message_id
 
 
 # Функция для получения токена и ID чата из конфигурации
