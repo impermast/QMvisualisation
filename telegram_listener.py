@@ -79,19 +79,19 @@ async def button(update, context):
 
 
 
-# app = Flask(__name__)
+app = Flask(__name__)
 
-# @app.route('/')
-# def home():
-#     return "Telegram Bot is running!"
+@app.route('/')
+def home():
+    return "Telegram Bot is running!"
 
-# def run_flask():
-#     port = int(os.environ.get("PORT", 5000))
-#     app.run(host="0.0.0.0", port=port)
+def run_flask():
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
 
 def main():
     import asyncio
-    # import threading
+    import threading
     bot = tg()
     print("Starting")
     token, _ = bot.get_token()
@@ -106,7 +106,7 @@ def main():
  
     application.add_handler(CommandHandler("savepolls", save_poll_group))
     
-    # threading.Thread(target=run_flask).start()
+    threading.Thread(target=run_flask).start()
     application.run_polling()
     asyncio.run(setup_commands(application))
 
