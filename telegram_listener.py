@@ -7,17 +7,8 @@ from tg_bot import tg
 from render_manager import *
 from poll_manager import *
 from flask import Flask
-import threading
 
-app = Flask(__name__)
 
-@app.route('/')
-def home():
-    return "Telegram Bot is running!"
-
-def run_flask():
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
 
 async def setup_commands(application):
     commands = [
@@ -88,9 +79,19 @@ async def button(update, context):
 
 
 
+# app = Flask(__name__)
+
+# @app.route('/')
+# def home():
+#     return "Telegram Bot is running!"
+
+# def run_flask():
+#     port = int(os.environ.get("PORT", 5000))
+#     app.run(host="0.0.0.0", port=port)
+
 def main():
     import asyncio
-    import threading
+    # import threading
     bot = tg()
     print("Starting")
     token, _ = bot.get_token()
@@ -102,10 +103,10 @@ def main():
     
     application.add_handler(CommandHandler("copypoll", handle_copypoll_command))
     application.add_handler(MessageHandler(filters.POLL, copy_poll_message))
-
+ 
     application.add_handler(CommandHandler("savepolls", save_poll_group))
     
-    threading.Thread(target=run_flask).start()
+    # threading.Thread(target=run_flask).start()
     application.run_polling()
     asyncio.run(setup_commands(application))
 
