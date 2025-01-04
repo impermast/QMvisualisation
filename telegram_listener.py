@@ -7,7 +7,9 @@ from tg_bot import tg
 from render_manager import *
 from poll_manager import *
 from flask import Flask
-import threading
+
+
+
 
 app = Flask(__name__)
 
@@ -17,7 +19,7 @@ def home():
 
 def run_flask():
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=False)
 
 async def setup_commands(application):
     commands = [
