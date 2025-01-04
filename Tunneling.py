@@ -201,3 +201,6 @@ class Tunneling(ThreeDScene):
             self.play(FadeOut(thank_you_text),run_time=0.5)
 
 
+if __name__ == "__main__":
+    scene = Tunneling(whattime=0.2)
+    scene.render()

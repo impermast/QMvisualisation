@@ -13,9 +13,6 @@ from flask import Flask
 
 app = Flask(__name__)
 
-@app.route('/')
-def home():
-    return "Telegram Bot is running!"
 
 def run_flask():
     port = int(os.environ.get("PORT", 5000))
@@ -90,6 +87,16 @@ async def button(update, context):
 
 
 
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Telegram Bot is running!"
+
+def run_flask():
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+
 def main():
     import asyncio
     import threading
@@ -104,7 +111,7 @@ def main():
     
     application.add_handler(CommandHandler("copypoll", handle_copypoll_command))
     application.add_handler(MessageHandler(filters.POLL, copy_poll_message))
-
+ 
     application.add_handler(CommandHandler("savepolls", save_poll_group))
     
     threading.Thread(target=run_flask).start()
