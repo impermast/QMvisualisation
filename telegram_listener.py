@@ -1,14 +1,13 @@
-
-
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from tg_bot import tg
-
+from telegram import BotCommand, InlineKeyboardMarkup, InlineKeyboardButton
 
 from render_manager import *
 from poll_manager import *
 from flask import Flask
-
-
+import os
+import threading
+import asyncio
 
 
 app = Flask(__name__)
@@ -35,6 +34,31 @@ async def main_menu(update, context):
     markup = InlineKeyboardMarkup(keyboard)
     await edit_or_send_msg(update,context,"Выберите действие:", markup)
 
+async def handle_render_option(update, context):
+    query = update.callback_query
+    selected_task = context.user_data.get('selected_task', 'Неизвестная задача')
+
+    if query.data == 'default':
+        try:
+            await query.edit_message_text(text=f"Выбраны параметры по умолчанию для задачи {selected_task}. Запуск рендеринга...")
+            await render_scene(context.user_data['scene_class'])
+        except (ValueError, KeyError) as e:
+            print(f"Ошибка создания экземпляра класса: {e}")
+            await query.edit_message_text(text=str(e))
+
+    elif query.data == 'custom':
+        await query.edit_message_text(text="Отправь параметры в формате param=value.")
+        context.user_data['awaiting_params'] = True
+    
+    elif query.data == 'backup':
+        try:
+            text1 = f"Запуск видео из бэкапа для задачи: {selected_task}"
+            print(text1)
+            await query.edit_message_text(text=text1)
+            await tg().video_async(selected_task)
+        except (ValueError, KeyError) as e:
+            await query.edit_message_text(text=str(e))
+
 async def button(update, context):
     query = update.callback_query
     await query.answer()
@@ -46,28 +70,7 @@ async def button(update, context):
         await show_parameter_options(update, context)
 
     elif query.data == 'default' or query.data == 'custom' or query.data == 'backup':
-        selected_task = context.user_data['selected_task']
-        if query.data == 'default':
-            try:
-                await query.edit_message_text(text=f"Выбраны параметры по умолчанию для задачи {selected_task}. Запуск рендеринга...")
-                await render_scene(context.user_data['scene_class'])
-            except ValueError as e:
-                print(f"Ошибка создания экземпляра класса: {e}")
-                await query.edit_message_text(text=str(e))
-
-        elif query.data == 'custom':
-            await query.edit_message_text(text="Отправь параметры в формате param=value.")
-            context.user_data['awaiting_params'] = True
-        
-        elif query.data == 'backup':
-            try:
-                text1 = f"Запуск видео из бэкапа для задачи: {selected_task}"
-                print(text1)
-                bot = tg()
-                await query.edit_message_text(text=text1)
-                await bot.video_async(selected_task)
-            except ValueError as e:
-                await query.edit_message_text(text=str(e))
+        await handle_render_option(update, context)
     
     elif query.data == 'main_menu':
         print("Возвращение в главное меню.")
@@ -81,32 +84,28 @@ async def button(update, context):
     elif query.data == 'show_polls':
         print("show_polls")
         await show_polls(update,context)
+    elif query.data == 'cancel_copy':
+        print("Canceling poll copy.")
+        await cancel_copy(update, context)
     if query.data.startswith("print_group"):
         group_name = query.data[len("print_group_"):]
         await print_polls(update,context,group_name)
 
 
-
-app = Flask(__name__)
-
 @app.route('/')
 def home():
     return "Telegram Bot is running!"
 
-def run_flask():
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
-def main():
-    import asyncio
-    import threading
+async def main():
     bot = tg()
     print("Starting")
     token, _ = bot.get_token()
 
-    application = Application.builder().token(token).build()
+    # Используем post_init для запуска асинхронной функции после инициализации бота
+    application = Application.builder().token(token).post_init(setup_commands).build()
+
     application.add_handler(CommandHandler("start", main_menu))
-    application.add_handler(CallbackQueryHandler(button))
+    application.add_handler(CallbackQueryHandler(button)) # Этот обработчик стал проще
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, custom_params))
     
     application.add_handler(CommandHandler("copypoll", handle_copypoll_command))
@@ -114,12 +113,13 @@ def main():
  
     application.add_handler(CommandHandler("savepolls", save_poll_group))
     
+    # Запускаем Flask в отдельном потоке
     threading.Thread(target=run_flask).start()
-    application.run_polling()
-    asyncio.run(setup_commands(application))
 
+    # Запускаем бота
+    await application.run_polling()
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
     

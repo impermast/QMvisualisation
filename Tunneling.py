@@ -3,9 +3,9 @@ import numpy as np
 
 class Tunneling(ThreeDScene):
     def __init__(self,
-                 k=3, q=1, whattime=1, a=2,test_logic=True,
+                 k=3, q=1, whattime=10, a=2,test_logic=False,
                  axmin=-5, axmax=5, Num_of_points = 200,
-                 title = Text("Задача 3. Туннельный эффект", font_size=60, color=WHITE),
+                 title = Text("Туннельный эффект", font_size=60, color=WHITE),
                    **kwargs):
         """Best params: q<k, k = 1.5-3; q=1"""
         super().__init__(**kwargs)
@@ -19,6 +19,18 @@ class Tunneling(ThreeDScene):
         self.Num=Num_of_points
         self.title=title
         self.name = self.__class__.__name__
+        
+        # Предварительный расчет коэффициентов
+        self.R_val, self.A_val, self.B_val, self.T_val = self._calculate_coeffs()
+
+    def _calculate_coeffs(self):
+        k, q, a = self.k, self.q, self.a
+        # Решение системы уравнений для коэффициентов
+        M = np.array([[1, -1, -1, 0], [1j*k, -q, q, 0], [0, np.exp(q*a), np.exp(-q*a), -np.exp(1j*k*a)], [0, q*np.exp(q*a), -q*np.exp(-q*a), -1j*k*np.exp(1j*k*a)]])
+        V = np.array([-1, 1j*k, 0, 0])
+        R, A, B, T = np.linalg.solve(M, V)
+        return R, A, B, T
+
 
     
     def get_default_params(self):
@@ -65,7 +77,7 @@ class Tunneling(ThreeDScene):
             font_size=size,
             color=WHITE
         ).to_corner(UL) 
-        textM = Tex(r"$(A \cosh(x) + B \sinh(x)) e^(- \omega t)$", font_size=size).to_edge(UP)
+        textM = Tex(r"$(A \cosh(x) + B \sinh(x)) e^{(- \omega t)}$", font_size=size).to_edge(UP)
         textR = Tex(r"$\psi(x,t) = T e^{i(kx - \omega t)}$", font_size=size).to_edge(UR)
         borderL = SurroundingRectangle(textL, color=WHITE, buff=0.1)
         borderM = SurroundingRectangle(textM, color=WHITE, buff=0.1)
@@ -74,29 +86,19 @@ class Tunneling(ThreeDScene):
 
 
 
-    def psi(self, x, t):
+    def psi(self, x):
         """Волновая функция"""  
-        def A(k, w, a):
-            numerator = 2*(np.cosh(a * w)+ (1j*w/k) *np.sinh(a * w))
-            denominator = -2*(1j*w/k)*np.cosh(a * w)-(1-w*w/(k*k))* np.sinh(a * w)
-            return numerator / denominator
-        def B(k, w, a):
-            return 2+ (1j*w/k)*A(k,w,a)
-        def T(k, w, a):
-            return (A(k,w,a)*np.sinh(a * w)+B(k, w, a)* np.cosh(a * w))
-        def R(k, w, a):
-            return B(k,w,a)-1
         conditions = [
             x < 0,                       # Первая область
             (x >= 0) & (x <= self.a),        # Вторая область
             x > self.a                       # Третья область
         ]
         def func1(x): 
-            return 0j+(np.exp(1j * (self.k * x)) + R(self.k,self.q,self.a) * np.exp(1j * (-self.k * x)))       
+            return np.exp(1j * self.k * x) + self.R_val * np.exp(-1j * self.k * x)
         def func2(x): 
-            return 0j+(A(self.k,self.q,self.a)* np.sinh((self.q * x)) + B(self.k,self.q,self.a)* np.cosh((self.q * x)))
+            return self.A_val * np.exp(self.q * x) + self.B_val * np.exp(-self.q * x)
         def func3(x): 
-            return 0j+T(self.k,self.q,self.a) * np.exp(1j * (self.k * (x-self.a)))
+            return self.T_val * np.exp(1j * self.k * x)
         return np.piecewise(x+0j, conditions, [func1, func2, func3])
 
     def potential(self,x):
@@ -129,12 +131,15 @@ class Tunneling(ThreeDScene):
     
     def draw_psifunc(self, axes, t_value):
         """Создание графика волновой функции в 3D"""
-        xmin = self.xmin
-        xmax=self.xmax
-        Num=self.Num 
-        x_vals = np.linspace(xmin, xmax, Num)
-        y_vals = np.cos(-self.k*t_value)*np.real(self.psi(x_vals, t_value))
-        z_vals = np.sin(-self.k*t_value)*np.imag(self.psi(x_vals, t_value))
+        x_vals = np.linspace(self.xmin, self.xmax, self.Num)
+        
+        # Корректная временная эволюция
+        omega = self.k**2 # E/hbar, где E=k^2 (при 2m=1, hbar=1)
+        psi_t = self.psi(x_vals) * np.exp(-1j * omega * t_value)
+
+        y_vals = np.real(psi_t)
+        z_vals = np.imag(psi_t)
+
         graph = axes.plot_line_graph(
             x_vals, y_vals, z_vals,
             line_color=RED, 
@@ -147,8 +152,8 @@ class Tunneling(ThreeDScene):
 
     def draw_circle(self, axes, t):
         """Создает круг в точке сшивки с радиусом, равным модулю psi(0, t)."""
-        radius = 2*np.abs(self.psi(0, t))**2  # Используйте модуль psi для радиуса
-        phi = np.angle(self.psi(0, t))
+        radius = 2*np.abs(self.psi(0))**2  # Используйте модуль psi для радиуса
+        phi = np.angle(self.psi(0))
         circle = Circle(radius=radius, color=YELLOW, fill_opacity=0.1)
         circle.move_to([0, 0, 0])  # Перемещаем круг в начало координат
         circle.rotate(90 * DEGREES, axis=DOWN)
@@ -172,7 +177,7 @@ class Tunneling(ThreeDScene):
 
         else:
             t = ValueTracker(0)
-            t_max = 10
+            t_max = self.whattime
             psi_graph = always_redraw(lambda: self.draw_psifunc(axes, t.get_value()))  
             potent =  self.draw_potential(axes)  
             solution,border = self.solution_text(30)      
@@ -185,12 +190,12 @@ class Tunneling(ThreeDScene):
             self.play(FadeOut(solution),FadeOut(border))
 
             self.play(Create(VGroup(axes,labels)))
-            self.play(t.animate.set_value(3*t_max /5), 
-                run_time=3*self.whattime/5, rate_func=linear)
-            self.move_camera(phi=75 * DEGREES, theta=-120 * DEGREES)
+            self.play(t.animate.set_value(3 * t_max / 5), 
+                run_time=3 * self.whattime / 5, rate_func=linear)
+            self.move_camera(phi=75 * DEGREES, theta=-120 * DEGREES, run_time=4)
             self.wait(0.5)
             self.play(t.animate.set_value(t_max), 
-                run_time=2*self.whattime/5, rate_func=linear)  
+                run_time=2 * self.whattime / 5, rate_func=linear)  
             self.wait(0.5)
             self.play(FadeOut(VGroup(axes,labels)),FadeOut(psi_graph), FadeOut(axes),FadeOut(potent), run_time=1)
             
@@ -202,5 +207,5 @@ class Tunneling(ThreeDScene):
 
 
 if __name__ == "__main__":
-    scene = Tunneling(whattime=0.2)
+    scene = Tunneling(whattime=10, test_logic=False)
     scene.render()

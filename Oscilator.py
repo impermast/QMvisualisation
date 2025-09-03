@@ -78,22 +78,27 @@ class Oscilator(ThreeDScene):
 
     
     def construct(self):
+        # Распределение времени
+        time_alloc = {'intro': 2, 'solution': 2, 'levels': 10, 'outro': 2}
+        total_units = sum(time_alloc.values())
+        t_unit = self.whattime / total_units
+
         levels = 6
         shift_down = 3.5
-        self.play(Write(self.title),run_time=1)
-        self.wait(0.5)
-        self.play(FadeOut(self.title),run_time=0.5)
+        self.play(Write(self.title), run_time=t_unit * time_alloc['intro'] / 2)
+        self.wait(t_unit * time_alloc['intro'] / 2)
+        self.play(FadeOut(self.title), run_time=0.5)
 
         colors = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE]
 
         solution,border = self.solution_text(40)
-        self.play(Write(solution),Create(border),run_time=0.7)
-        self.wait(0.5)
-        self.play(FadeOut(solution),FadeOut(border),run_time=0.5)
+        self.play(Write(solution), Create(border), run_time=t_unit * time_alloc['solution'] / 2)
+        self.wait(t_unit * time_alloc['solution'] / 2)
+        self.play(FadeOut(solution), FadeOut(border), run_time=0.5)
 
         potent = self.draw_potential().shift(DOWN * (shift_down + 0.5))
         all_objects = [potent]
-        self.play(Create(potent))
+        self.play(Create(potent), run_time=t_unit)
         for i in range(levels):
             energy_level = Line(start=LEFT*5, end=RIGHT*5, color=colors[i]).shift(UP*i*1.3+ DOWN * shift_down)
             
@@ -101,24 +106,24 @@ class Oscilator(ThreeDScene):
                 rf"E_{i} = {2*i+1}\hbar \omega/2",
                 font_size=24
             ).next_to(energy_level, RIGHT)
-            self.play(Create(energy_level),Create(energy_text))
+            self.play(Create(energy_level), Create(energy_text), run_time=t_unit * time_alloc['levels'] / (levels * 2))
 
             wave_function = FunctionGraph(
                 lambda x: self.psi(x,i), x_range=[-self.a, self.a], color=colors[i]
             ).shift(UP*i*1.3+ DOWN * shift_down)
-            self.play(Create(wave_function))
+            self.play(Create(wave_function), run_time=t_unit * time_alloc['levels'] / (levels * 2))
             
             all_objects.append(energy_level)
             all_objects.append(wave_function)
             all_objects.append(energy_text)
 
-        self.wait(0.5)
-        self.play(*[FadeOut(obj) for obj in all_objects], run_time=0.5)
+        self.wait(t_unit)
+        self.play(*[FadeOut(obj) for obj in all_objects], run_time=t_unit)
             
         thank_you_text = Text("Спасибо за внимание!", font_size=40, color=WHITE)
-        self.play(Write(thank_you_text),run_time=0.5)
-        self.wait(0.5)
-        self.play(FadeOut(thank_you_text),run_time=0.5)
+        self.play(Write(thank_you_text), run_time=t_unit * time_alloc['outro'] / 3)
+        self.wait(t_unit * time_alloc['outro'] / 3)
+        self.play(FadeOut(thank_you_text), run_time=t_unit * time_alloc['outro'] / 3)
 
 
 if __name__ == "__main__":

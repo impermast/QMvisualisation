@@ -13,7 +13,7 @@ class AngleChecker(ThreeDScene):
         self.add(axes,labels)
         self.wait()
 
-class Sqeeze(ThreeDScene):
+class Squeeze(ThreeDScene):
     def __init__(self,
                  x0=-7, p0=10, dp0 = 2,
                  whattime=0.1,xaxis=10, 
@@ -332,5 +332,5 @@ class Sqeeze(ThreeDScene):
 
 
 if __name__ == "__main__":
-    scene = Sqeeze(whattime=0.2)
+    scene = Squeeze(whattime=1, test_logic=False)
     scene.render()

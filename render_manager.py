@@ -1,16 +1,14 @@
-# handlers.py
+# render_manager.py
 import importlib
 from tg_bot import tg, edit_or_send_msg
-from telegram import BotCommand,InlineKeyboardButton, InlineKeyboardMarkup, Update, error
-
-
-
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from BoxExpansion import BoxExpansion
 
 class VisualizationTask:
-    def __init__(self, name,**kwargs):
+    def __init__(self, name, module_name, class_name, **kwargs):
         self.name = name
-        self.module_name = name
-        self.class_name = name
+        self.module_name = module_name
+        self.class_name = class_name
         try:
             module = importlib.import_module(self.module_name)
             self.cls = getattr(module, self.class_name)
@@ -19,10 +17,15 @@ class VisualizationTask:
             print(f"Ошибка загрузки класса {self.class_name} из модуля {self.module_name}: {e}")
             self.cls = None
 
+# Словарь сцен. Рекомендуется использовать имена файлов в нижнем регистре (например, 'tunneling.py')
+# и имена классов в CamelCase (например, 'Tunneling').
+# Ключ словаря - это то, что увидит пользователь в кнопках.
 SCENE_DICT = {
-    'Tunneling': VisualizationTask('Tunneling'),
-    'Oscilator': VisualizationTask('Oscilator'),  
-    'Sqeeze': VisualizationTask('Sqeeze'),  
+    # 'Key': VisualizationTask('unique_name', 'module_name', 'ClassName')
+    'Tunneling': VisualizationTask('Tunneling', 'Tunneling', 'Tunneling'),
+    'Oscilator': VisualizationTask('Oscilator', 'Oscilator', 'Oscilator'),
+    'Squeeze': VisualizationTask('Squeeze', 'Squeeze', 'Squeeze'),
+    'BoxExpansion': VisualizationTask('BoxExpansion', 'BoxExpansion', 'BoxExpansion'),
 }
 
         
@@ -59,10 +62,19 @@ async def custom_params(update, context):
             for arg in update.message.text.split():
                 try:
                     key, value = arg.split('=')
+                    # Попытка преобразовать значение в правильный тип
                     try:
-                        params[key] = float(value)
+                        if '.' in value:
+                            params[key] = float(value)
+                        else:
+                            params[key] = int(value)
                     except ValueError:
-                        params[key] = value
+                        if value.lower() == 'true':
+                            params[key] = True
+                        elif value.lower() == 'false':
+                            params[key] = False
+                        else:
+                            params[key] = value # Оставляем как строку, если не удалось преобразовать
                 except ValueError:
                     print(f"Ошибка в параметре: {arg}")
                     await update.message.reply_text(f"Ошибка в параметре: {arg}")
@@ -70,6 +82,3 @@ async def custom_params(update, context):
         context.user_data['awaiting_params'] = False
         print(f"Пользователь ввел параметры: {params}")
         await render_scene(context.user_data['scene_class'], params)
-
-
-
