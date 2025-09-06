@@ -184,17 +184,17 @@ class Ladder(ThreeDScene):
         self.remove(psi_graph) 
 
     def construct(self):
-        axes, labels = self.create_axes()
-
         potentialTex = Tex(
             r"$U(x) = U_0\,[x>0]$",
             color=GREEN
         )
 
-        self.play(Write(potentialTex), Write(potentialTex), run_time=1)
-        self.wait(0.5)
+        self.play(Write(self.title), Write(potentialTex), run_time=1)
+        self.wait(1)
         self.play(FadeOut(self.title), FadeOut(potentialTex), run_time=0.5)
 
+
+        axes, labels = self.create_axes()
         if self.test_logic == True:
             graph = self.draw_psifunc(axes, 0)
             self.add(axes, labels, graph)
