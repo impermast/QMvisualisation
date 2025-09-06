@@ -3,11 +3,16 @@ from manim import *
 import numpy as np
 from typing import Tuple
 
+#ladder.py
+from manim import *
+import numpy as np
+from typing import Tuple
+
 class Ladder(ThreeDScene):
     def __init__(self,
                  k=3, q=1, whattime=10,test_logic=False,
                  axmin=-5, axmax=5, Num_of_points = 200,
-                 title = Text("Ступенька", font_size=60, color=WHITE),
+                 title = Text("Ступенька", font_size=60, color=WHITE).to_edge(UP),
                    **kwargs):
         """k - волновое число до барьера, q - после. whattime - время анимации."""
         super().__init__(**kwargs)
@@ -59,12 +64,12 @@ class Ladder(ThreeDScene):
             r"$\psi(x) = e^{ikx} + R e^{-ikx}$",
             font_size=size,
             color=WHITE
-        ).to_corner(UL)
+        ).to_corner(LEFT)
 
         if self.E > 0: # E > U_0, прохождение
-            textR = Tex(r"$\psi(x) = T e^{iqx}$", font_size=size).to_edge(UR)
+            textR = Tex(r"$\psi(x) = T e^{iqx}$", font_size=size).to_edge(RIGHT)
         else: # E < U_0, затухание
-            textR = Tex(r"$\psi(x) = T e^{-qx}$", font_size=size).to_edge(UR)
+            textR = Tex(r"$\psi(x) = T e^{-qx}$", font_size=size).to_edge(RIGHT)
 
         borderL = SurroundingRectangle(textL, color=WHITE, buff=0.1)
         borderR = SurroundingRectangle(textR, color=WHITE, buff=0.1)
@@ -162,17 +167,14 @@ class Ladder(ThreeDScene):
         potent = self.draw_potential(axes)
 
         self.add(psi_graph, potent)
-        self.wait(1)
         self.play(FadeOut(solution), FadeOut(border))
 
         self.play(Create(VGroup(axes, labels)))
-        self.play(t.animate.set_value(3 * tmax / 5),
-                  run_time=3 * tmax / 5, rate_func=linear)
-        self.move_camera(phi=75 * DEGREES, theta=-120 * DEGREES, run_time=2)
-        self.wait(0.5)
-        self.play(t.animate.set_value(tmax),
+        self.play(t.animate.set_value(2 * tmax / 5),
                   run_time=2 * tmax / 5, rate_func=linear)
-        self.wait(0.5)
+        self.move_camera(phi=75 * DEGREES, theta=-120 * DEGREES)
+        self.play(t.animate.set_value(tmax),
+                  run_time=3 * tmax / 5, rate_func=linear)
         
         # Очистка сцены для следующего кейса
         self.play(
@@ -182,11 +184,16 @@ class Ladder(ThreeDScene):
         self.remove(psi_graph) 
 
     def construct(self):
-        self.play(Write(self.title), run_time=1)
-        self.wait(0.5)
-        self.play(FadeOut(self.title))
-
         axes, labels = self.create_axes()
+
+        potentialTex = Tex(
+            r"$U(x) = U_0\,[x>0]$",
+            color=GREEN
+        )
+
+        self.play(Write(potentialTex), Write(potentialTex), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(self.title), FadeOut(potentialTex), run_time=0.5)
 
         if self.test_logic == True:
             graph = self.draw_psifunc(axes, 0)
@@ -208,7 +215,8 @@ class Ladder(ThreeDScene):
             self.wait(1)
             self.play(FadeOut(thank_you_text), run_time=0.5)
 
+
 if __name__ == "__main__":
     # Для E > U₀, k > q. Для E < U₀, q - параметр затухания.
-    scene = Ladder(k=2, q=1, whattime=10, test_logic=False)
+    scene = Ladder(k=2, q=1, whattime=15, test_logic=False)
     scene.render()

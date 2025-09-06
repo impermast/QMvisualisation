@@ -1,37 +1,19 @@
 # render_manager.py
-import importlib
-from tg_bot import tg, edit_or_send_msg
+from .tg_bot import tg, edit_or_send_msg
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from BoxExpansion import BoxExpansion
+from animations import BoxExpansion, Tunneling, Oscilator, Squeeze, QuantumScattering
 
-class VisualizationTask:
-    def __init__(self, name, module_name, class_name, **kwargs):
-        self.name = name
-        self.module_name = module_name
-        self.class_name = class_name
-        try:
-            module = importlib.import_module(self.module_name)
-            self.cls = getattr(module, self.class_name)
-            print(f"Успешная загрузка класса {self.class_name} из модуля {self.module_name}")
-        except (ModuleNotFoundError, AttributeError) as e:
-            print(f"Ошибка загрузки класса {self.class_name} из модуля {self.module_name}: {e}")
-            self.cls = None
-
-# Словарь сцен. Рекомендуется использовать имена файлов в нижнем регистре (например, 'tunneling.py')
-# и имена классов в CamelCase (например, 'Tunneling').
-# Ключ словаря - это то, что увидит пользователь в кнопках.
 SCENE_DICT = {
-    # 'Key': VisualizationTask('unique_name', 'module_name', 'ClassName')
-    'Tunneling': VisualizationTask('Tunneling', 'Tunneling', 'Tunneling'),
-    'Oscilator': VisualizationTask('Oscilator', 'Oscilator', 'Oscilator'),
-    'Squeeze': VisualizationTask('Squeeze', 'Squeeze', 'Squeeze'),
-    'BoxExpansion': VisualizationTask('BoxExpansion', 'BoxExpansion', 'BoxExpansion'),
+    'Tunneling': Tunneling,
+    'Oscilator': Oscilator,
+    'Squeeze': Squeeze,
+    'BoxExpansion': BoxExpansion,
+    'QuantumScattering': QuantumScattering,
 }
 
-        
 async def render_menu(update, context):
     keyboard = []
-    for scene_key, scene_class in SCENE_DICT.items():
+    for scene_key in SCENE_DICT.keys():
         print(f"Добавление кнопки для задачи: {scene_key}")
         keyboard.append([InlineKeyboardButton(scene_key, callback_data=scene_key)])
     keyboard.append([InlineKeyboardButton("Назад в главное меню", callback_data="main_menu")])
@@ -48,8 +30,8 @@ async def show_parameter_options(update, context):
     markup = InlineKeyboardMarkup(keyboard1)
     await edit_or_send_msg(update,context,'Выберите параметры для задачи:', markup)
 
-async def render_scene(scene_class:VisualizationTask, params=None):
-    scene = scene_class.cls(**params) if params else scene_class.cls()
+async def render_scene(scene_class, params=None):
+    scene = scene_class(**params) if params else scene_class()
     scene.render()
     name = scene.name
     bot = tg()
@@ -62,7 +44,6 @@ async def custom_params(update, context):
             for arg in update.message.text.split():
                 try:
                     key, value = arg.split('=')
-                    # Попытка преобразовать значение в правильный тип
                     try:
                         if '.' in value:
                             params[key] = float(value)
@@ -74,7 +55,7 @@ async def custom_params(update, context):
                         elif value.lower() == 'false':
                             params[key] = False
                         else:
-                            params[key] = value # Оставляем как строку, если не удалось преобразовать
+                            params[key] = value
                 except ValueError:
                     print(f"Ошибка в параметре: {arg}")
                     await update.message.reply_text(f"Ошибка в параметре: {arg}")

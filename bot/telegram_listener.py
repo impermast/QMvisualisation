@@ -1,9 +1,9 @@
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
-from tg_bot import tg
+from .tg_bot import tg
 from telegram import BotCommand, InlineKeyboardMarkup, InlineKeyboardButton
 
-from render_manager import *
-from poll_manager import *
+from .render_manager import *
+from .poll_manager import *
 from flask import Flask
 import os
 import threading

@@ -2,13 +2,11 @@
 # Его можно переименовать в, например, `render_local.py` для ясности.
 # Он не является основной точкой входа для телеграм-бота.
 
-from tg_bot import tg
+from bot import tg
 import traceback
 
 # Импортируйте сцены, которые вы хотите протестировать
-from Tunneling import Tunneling
-from Sqeeze import Squeeze
-from Oscilator import Oscilator
+from animations import Tunneling, Squeeze, Oscilator
 
 
 if __name__ == "__main__":

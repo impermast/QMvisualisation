@@ -6,7 +6,7 @@ from tg_bot import edit_or_send_msg
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 
 
-POLL_GROUPS_DIR = "poll_groups"
+POLL_GROUPS_DIR = os.path.join("bot", "poll_groups")
 
 class PollManager:
     def __init__(self):
