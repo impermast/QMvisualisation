@@ -3,6 +3,14 @@ import numpy as np
 from scipy.fft import fft, ifft, fftfreq
 
 class ProbabilityCurrent(Scene):
+    DESCRIPTION = "Описание анимации 'Поток вероятности': Эта анимация объясняет концепцию потока вероятности в квантовой механике. Она включает вывод уравнения непрерывности, демонстрацию свободного волнового пакета и рассеяние волнового пакета на потенциальном барьере, визуализируя плотность вероятности и ток вероятности."
+
+    @classmethod
+    def get_info(cls):
+        return {
+            "name": cls.__name__,
+            "description": cls.DESCRIPTION
+        }
     def __init__(self, whattime = 50, num_steps = 200, **kwargs):
         super().__init__(**kwargs)
         self.whattime_scene1 = (3/10) * whattime

@@ -40,3 +40,4 @@ coverage.xml
 
 # Configuration file with tokens or sensitive data
 config.json
+bot/config.json

@@ -35,15 +35,23 @@ async def edit_or_send_msg(update, context, msg_txt,markup=None):
 
 # Функция для получения токена и ID чата из конфигурации
 def load_telegram_config(config_path="config.json"):
-    """Загружает конфигурацию из файла config.json"""
+    """Загружает конфигурацию из файла config.json или переменных окружения."""
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+
+    if token and chat_id:
+        print("Используются переменные окружения для токена и ID чата.")
+        return token, chat_id
+
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     config_path = os.path.join(project_root, config_path)
     try:
         with open(config_path, "r") as config_file:
             config = json.load(config_file)
+        print(f"Используется файл конфигурации: {config_path}")
         return config.get("telegram_token"), config.get("telegram_chat_id")
     except FileNotFoundError:
-        print(f"Ошибка: файл конфигурации '{config_path}' не найден.")
+        print(f"Ошибка: файл конфигурации '{config_path}' не найден. Проверьте переменные окружения или создайте config.json.")
         return None, None
     except json.JSONDecodeError:
         print(f"Ошибка при разборе конфигурационного файла '{config_path}'.")
@@ -57,17 +65,10 @@ class tg:
     def get_token(self):
         return self.token, self.chat_id
     
-
-    def notify(self, message="Рендеринг завершен."):
-        """Отправить сообщение в Telegram после завершения рендеринга.""" 
-        asyncio.run(self.send_telegram_message(message))
-        
     def video(self, name, path="media/videos/1080p60/"):
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         abs_path = os.path.join(project_root, path, name + ".mp4")
         asyncio.run(self.send_telegram_video(abs_path))
-
-        #Async block
 
     async def send_telegram_message(self, message):
         """Отправка сообщения в Telegram."""
@@ -75,10 +76,6 @@ class tg:
             await self.bot.send_message(chat_id=self.chat_id, text=message)
         except telegram.error.TelegramError as e:
             print(f"Ошибка при отправке сообщения: {e}")
-
-    async def notify_async(self, message="Рендеринг завершен."):
-        """Отправить сообщение в Telegram после завершения рендеринга.""" 
-        await self.send_telegram_message(message)
         
     async def video_async(self, name, path="media/videos/1080p60/"):
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))

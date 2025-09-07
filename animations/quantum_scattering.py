@@ -2,6 +2,14 @@ from manim import *
 import numpy as np
 
 class QuantumScattering(Scene):
+    DESCRIPTION = "Описание анимации 'Квантовое рассеяние': Эта анимация демонстрирует рассеяние квантовой частицы на потенциальном барьере. Показана эволюция волновой функции при взаимодействии с барьером, включая отражение и прохождение."
+
+    @classmethod
+    def get_info(cls):
+        return {
+            "name": cls.__name__,
+            "description": cls.DESCRIPTION
+        }
     def construct(self):
         # Определение осей
         axes = Axes(

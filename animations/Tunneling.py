@@ -2,6 +2,14 @@ from manim import *
 import numpy as np
 
 class Tunneling(ThreeDScene):
+    DESCRIPTION = "Описание анимации 'Туннельный эффект': Эта анимация демонстрирует квантовый туннельный эффект, при котором частица может проходить сквозь потенциальный барьер, даже если ее энергия меньше высоты барьера. Показана эволюция волновой функции до, внутри и после барьера."
+
+    @classmethod
+    def get_info(cls):
+        return {
+            "name": cls.__name__,
+            "description": cls.DESCRIPTION
+        }
     def __init__(self,
                  k=3, q=1, whattime=10, a=2,test_logic=False,
                  axmin=-5, axmax=5, Num_of_points = 200,

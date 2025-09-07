@@ -2,7 +2,7 @@
 import os
 import json
 
-from tg_bot import edit_or_send_msg
+from .tg_bot import edit_or_send_msg
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 
 

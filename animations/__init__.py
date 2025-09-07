@@ -3,3 +3,4 @@ from .BoxExpansion import BoxExpansion
 from .Oscilator import Oscilator
 from .Squeeze import Squeeze
 from .Tunneling import Tunneling
+from .ProbabilityCurrent import ProbabilityCurrent

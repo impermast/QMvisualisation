@@ -14,6 +14,14 @@ class AngleChecker(ThreeDScene):
         self.wait()
 
 class Squeeze(ThreeDScene):
+    DESCRIPTION = "Описание анимации 'Сжатое (когерентное) состояние': Эта анимация исследует эволюцию сжатых когерентных состояний в квантовой механике. Она демонстрирует, как волновой пакет может сжиматься в одном измерении за счет расширения в другом, сохраняя при этом минимальную неопределенность."
+
+    @classmethod
+    def get_info(cls):
+        return {
+            "name": cls.__name__,
+            "description": cls.DESCRIPTION
+        }
     def __init__(self,
                  x0=-7, p0=10, dp0 = 2,
                  whattime=0.1,xaxis=10, 

@@ -2,6 +2,14 @@ from manim import *
 import numpy as np
 
 class BoxExpansion(Scene):
+    DESCRIPTION = "Описание анимации 'Расширение ящика': Эта анимация демонстрирует поведение частицы в одномерном потенциальном ящике, когда размер ящика внезапно увеличивается. Показана временная эволюция волновой функции и распределение вероятностей."
+
+    @classmethod
+    def get_info(cls):
+        return {
+            "name": cls.__name__,
+            "description": cls.DESCRIPTION
+        }
     def __init__(self, whattime=25, test_logic=False, **kwargs):
         super().__init__(**kwargs)
         # Параметры

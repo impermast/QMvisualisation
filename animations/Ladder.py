@@ -9,6 +9,14 @@ import numpy as np
 from typing import Tuple
 
 class Ladder(ThreeDScene):
+    DESCRIPTION = "Описание анимации 'Потенциальная ступенька': Эта анимация демонстрирует поведение квантовой частицы, сталкивающейся с потенциальной ступенькой. Показаны случаи, когда энергия частицы больше и меньше высоты ступеньки, включая прохождение, отражение и затухание."
+
+    @classmethod
+    def get_info(cls):
+        return {
+            "name": cls.__name__,
+            "description": cls.DESCRIPTION
+        }
     def __init__(self,
                  k=3, q=1, whattime=10,test_logic=False,
                  axmin=-5, axmax=5, Num_of_points = 200,

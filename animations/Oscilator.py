@@ -3,6 +3,14 @@ import numpy as np
 from scipy.special import hermite
 
 class Oscilator(ThreeDScene):
+    DESCRIPTION = "Описание анимации 'Одномерный осциллятор': Эта анимация демонстрирует стационарные состояния квантового гармонического осциллятора. Показаны волновые функции и соответствующие им уровни энергии для различных квантовых чисел n."
+
+    @classmethod
+    def get_info(cls):
+        return {
+            "name": cls.__name__,
+            "description": cls.DESCRIPTION
+        }
     def __init__(self,
                  n=1, w=1, whattime=1,a=5, 
                  test_logic=True,Num_of_points = 100,
