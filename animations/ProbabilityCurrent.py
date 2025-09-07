@@ -14,13 +14,14 @@ class ProbabilityCurrent(Scene):
         self.m = 2.0
         self.num_steps = num_steps
         self.X_MIN, self.X_MAX = -10.0, 10.0
-        self.SAMPLES = 4096 # Для FFT лучше степени двойки
+        self.SAMPLES = 2**15 # Для FFT лучше степени двойки
 
         # Атрибуты для симуляции
         self.psi_t = None
         self.potential_v = None
         self.x_vals = np.linspace(self.X_MIN, self.X_MAX, self.SAMPLES)
         self.k_vals = fftfreq(self.SAMPLES, d=self.x_vals[1] - self.x_vals[0]) * 2 * np.pi
+        print(self.k_vals)
 
     def intro(self, title_text, dt = 1):
         title = Text(title_text).to_edge(UP)
@@ -63,6 +64,11 @@ class ProbabilityCurrent(Scene):
 
     def _get_j_data_numerical(self):
         psi_k = fft(self.psi_t)
+
+        # Фильтруем высокие частоты, чтобы сгладить производную
+        k_cutoff = 20.0
+        psi_k[np.abs(self.k_vals) > k_cutoff] = 0
+
         d_psi_dx_k = 1j * self.k_vals * psi_k
         d_psi_dx = ifft(d_psi_dx_k)
         
@@ -170,18 +176,13 @@ class ProbabilityCurrent(Scene):
         self.wait(2*dt)
         self.play(FadeOut(title), FadeOut(eq_group), FadeOut(defs_group), run_time=1*dt)
 
-    def construct_scene2_wavepacket(self):
-        #базовое время сцены делю на две части:
-        # 1/4 на анимацию вход/выход
-        # 3/4 на анимацию графика
-        # dt это единичный шаг во времени с текущим временем сцены
+    def construct_scene2_wavepacket(self, sim_time_start=0.0, sim_time_end=4.0):
         dt = (1/3 * self.whattime_scene2) / 9
         psi_col = BLUE
         j_col = GREEN
 
-
         title = self.intro("Свободный волновой пакет", dt=dt)
-        psi_formula = MathTex(r"\psi(x,0) \sim e^{-\frac{(x-x_0)^2}{4\sigma^2}} e^{ik_0x}", font_size=42, color=psi_col)
+        psi_formula = MathTex(r"\psi(x,0) \sim e^{-(x-x_0)^2/4\sigma^2} e^{ik_0x}", font_size=40, color=psi_col)
         psi_formula.to_corner(UL).shift(DOWN * 1.5)
         
         j_formula = MathTex(r"j = \frac{\hbar}{2mi}(\psi^*\frac{\partial \psi}{\partial x} - \psi\frac{\partial \psi^*}{\partial x})", font_size=40, color=j_col)
@@ -191,38 +192,56 @@ class ProbabilityCurrent(Scene):
         self.play(FadeOut(title),run_time=1*dt)
 
         ax, labels = self._make_axes()
-        self.play(Create(ax), FadeIn(labels),run_time=1*dt)
+        
+        time_tracker = ValueTracker(sim_time_start)
+        time_label = VGroup(
+            MathTex("t = "),
+            DecimalNumber(time_tracker.get_value(), num_decimal_places=2, show_ellipsis=False)
+        ).arrange(RIGHT).to_corner(UL)
+
+        time_label[1].add_updater(lambda m: m.set_value(time_tracker.get_value()))
+
+        self.play(Create(ax), FadeIn(labels), Write(time_label), run_time=1*dt)
 
         self.potential_v = self._create_trapezoid_potential(self.x_vals, U0=0, x_start=0, ramp_length=0)
-        self.psi_t = self._psi_initial(self.x_vals, k0=4, sigma=1.0, x0=-11.0)
+        self.psi_t = self._psi_initial(self.x_vals, k0=4, sigma=0.6, x0=-6.0)
 
         density_graph = ax.plot(lambda x: np.interp(x, self.x_vals, self._get_psi_data_numerical()), color=psi_col, use_smoothing=False).set_stroke(width=4)
-        j_graph = ax.plot(lambda x: np.interp(x, self.x_vals, self._get_j_data_numerical()), color=j_col, use_smoothing=True).set_stroke(width=4)
+        j_graph = ax.plot(lambda x: np.interp(x, self.x_vals, self._get_j_data_numerical()), color=j_col, use_smoothing=False).set_stroke(width=4)
         graphs = VGroup(density_graph, j_graph)
 
+        # --- Исправленный updater ---
+        sim_time_prev = ValueTracker(time_tracker.get_value())
+
         def evolve_updater(mobs, dt):
-            self._evolve_split_step(dt)
+            sim_dt = time_tracker.get_value() - sim_time_prev.get_value()
+            if sim_dt == 0: return
+
+            self._evolve_split_step(sim_dt)
+            sim_time_prev.set_value(time_tracker.get_value())
+
             new_density_graph = ax.plot(lambda x: np.interp(x, self.x_vals, self._get_psi_data_numerical()), color=psi_col, use_smoothing=False).set_stroke(width=4)
-            new_j_graph = ax.plot(lambda x: np.interp(x, self.x_vals, self._get_j_data_numerical()), color=j_col, use_smoothing=True).set_stroke(width=4)
+            new_j_graph = ax.plot(lambda x: np.interp(x, self.x_vals, self._get_j_data_numerical()), color=j_col, use_smoothing=False).set_stroke(width=4)
             mobs[0].become(new_density_graph)
             mobs[1].become(new_j_graph)
+        # --------------------------
 
         graphs.add_updater(evolve_updater)
         self.add(graphs)
         
         animation_duration = 2/3 * self.whattime_scene2
-        self.wait(animation_duration)
+        self.play(time_tracker.animate.set_value(sim_time_end), run_time=animation_duration, rate_func=linear)
         
         graphs.remove_updater(evolve_updater)
 
         self.wait(2*dt)
-        self.play(FadeOut(VGroup(psi_formula, j_formula, ax, labels, graphs)), run_time=1*dt)
+        self.play(FadeOut(VGroup(psi_formula, j_formula, ax, labels, graphs, time_label)), run_time=1*dt)
 
-    def construct_scene3_scattering(self):
+    def construct_scene3_scattering(self, sim_time_start=0.0, sim_time_end=8.0):
 
         dt = 1/3 * self.whattime_scene3 / 8
 
-        k0=5
+        k0=4
         E0 = (k0*k0)/(2 * self.m)
         U0 = 0.97* E0
         title = self.intro(f"Рассеяние на потенциале, E > U0", dt=dt)
@@ -238,13 +257,22 @@ class ProbabilityCurrent(Scene):
         self.play(FadeOut(title), Write(j_formula), run_time=1*dt)
 
         ax, labels = self._make_axes(y_range=[-0.5, 1.8, 2])
-        self.play(Create(ax), FadeIn(labels), run_time=2*dt)
+
+        time_tracker = ValueTracker(sim_time_start)
+        time_label = VGroup(
+            MathTex("t = "),
+            DecimalNumber(time_tracker.get_value(), num_decimal_places=2, show_ellipsis=False)
+        ).arrange(RIGHT).to_corner(UL)
+
+        time_label[1].add_updater(lambda m: m.set_value(time_tracker.get_value()))
+
+        self.play(Create(ax), FadeIn(labels), Write(time_label), run_time=2*dt)
 
         self.potential_v = self._create_trapezoid_potential(self.x_vals, U0=U0, x_start=0, ramp_length=0)
-        self.psi_t = self._psi_initial(self.x_vals, k0=k0, sigma=0.6, x0 = -4.0)
+        self.psi_t = self._psi_initial(self.x_vals, k0=k0, sigma=0.6, x0 = -5.0)
         
         potential_graph = ax.plot(lambda x: self._create_trapezoid_potential(x, U0=U0*4/(k0*k0), x_start=-0.0, ramp_length=0), color=pot_col, use_smoothing=False)
-        potential_label = MathTex("V(x)", color=pot_col).next_to(potential_graph, DR, buff=-0.8)
+        potential_label = MathTex("V(x)", color=pot_col).next_to(potential_graph, RIGHT, buff=-0.8)
         self.play(Create(potential_graph), Write(potential_label), run_time=1*dt)
 
         # Create the graphs
@@ -253,28 +281,35 @@ class ProbabilityCurrent(Scene):
         j_graph = ax.plot(lambda x: np.interp(x, self.x_vals, self._get_j_data_numerical()), color=j_col, use_smoothing=True).set_stroke(width=3)
         graphs = VGroup(reflected_graph, transmitted_graph, j_graph)
 
-        # Updater function
+        # --- Исправленный updater ---
+        sim_time_prev = ValueTracker(time_tracker.get_value())
+
         def evolve_updater(mobs, dt):
-            self._evolve_split_step(dt/2)
-            # Create new graphs and update the old ones
+            sim_dt = time_tracker.get_value() - sim_time_prev.get_value()
+            if sim_dt == 0: return
+
+            self._evolve_split_step(sim_dt)
+            sim_time_prev.set_value(time_tracker.get_value())
+
             new_reflected_graph = ax.plot(lambda x: np.interp(x, self.x_vals, self._get_psi_reflected_data()), color=r_col, use_smoothing=True).set_stroke(width=4)
             new_transmitted_graph = ax.plot(lambda x: np.interp(x, self.x_vals, self._get_psi_transmitted_data()), color=t_col, use_smoothing=True).set_stroke(width=4)
             new_j_graph = ax.plot(lambda x: np.interp(x, self.x_vals, self._get_j_data_numerical()), color=j_col, use_smoothing=True).set_stroke(width=3)
             mobs[0].become(new_reflected_graph)
             mobs[1].become(new_transmitted_graph)
             mobs[2].become(new_j_graph)
+        # --------------------------
 
-        # Add updater and run animation
         graphs.add_updater(evolve_updater)
         self.add(graphs)
         
-        self.wait(2/3 * self.whattime_scene3)
+        animation_duration = 2/3 * self.whattime_scene3
+        self.play(time_tracker.animate.set_value(sim_time_end), run_time=animation_duration, rate_func=linear)
         
         graphs.remove_updater(evolve_updater)
 
         # Fade out
         self.wait(2*dt)
-        self.play(FadeOut(VGroup(ax, labels, potential_graph, potential_label, graphs, j_formula)), run_time=1*dt)
+        self.play(FadeOut(VGroup(ax, labels, potential_graph, potential_label, graphs, j_formula, time_label)), run_time=1*dt)
 
     # ===================== ГЛАВНЫЙ КОНСТРУКТОР =====================
     def construct(self):
@@ -283,10 +318,10 @@ class ProbabilityCurrent(Scene):
         self.play(FadeOut(intro),run_time=0.5)
 
         self.construct_scene1_derivation()
-        self.construct_scene2_wavepacket()
-        self.construct_scene3_scattering()
+        self.construct_scene2_wavepacket(sim_time_start=0.0, sim_time_end=5)
+        self.construct_scene3_scattering(sim_time_start=0.0, sim_time_end=5)
         self.outro()
 
 if __name__ == "__main__":
-    scene = ProbabilityCurrent(whattime=60, num_steps=200)
+    scene = ProbabilityCurrent(whattime=50, num_steps=200)
     scene.render()
