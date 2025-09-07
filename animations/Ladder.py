@@ -56,6 +56,7 @@ class Ladder(ThreeDScene):
             z_label=Tex(r"$Im(\psi)$")   # Ось z — мнимая часть
         )
         self.set_camera_orientation(phi=0 * DEGREES, theta=-90 * DEGREES)
+        self.move_camera(zoom=0.9)
         return axes,labels
     
     def solution_text(self, size: int) -> Tuple[VGroup, VGroup]:
@@ -166,10 +167,8 @@ class Ladder(ThreeDScene):
         psi_graph = always_redraw(lambda: self.draw_psifunc(axes, t.get_value()))
         potent = self.draw_potential(axes)
 
-        self.add(psi_graph, potent)
-        self.play(FadeOut(solution), FadeOut(border))
+        self.play(FadeOut(solution), FadeOut(border), Create(VGroup(psi_graph, potent)), Create(VGroup(axes, labels)), run_time=0.5)
 
-        self.play(Create(VGroup(axes, labels)))
         self.play(t.animate.set_value(2 * tmax / 5),
                   run_time=2 * tmax / 5, rate_func=linear)
         self.move_camera(phi=75 * DEGREES, theta=-120 * DEGREES)
@@ -218,5 +217,5 @@ class Ladder(ThreeDScene):
 
 if __name__ == "__main__":
     # Для E > U₀, k > q. Для E < U₀, q - параметр затухания.
-    scene = Ladder(k=2, q=1, whattime=15, test_logic=False)
+    scene = Ladder(k=2, q=1, whattime=10, test_logic=False)
     scene.render()
