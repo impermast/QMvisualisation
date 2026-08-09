@@ -27,6 +27,7 @@ pango/
 
 # Local development settings
 *.local
+.worktrees/
 
 # Files created by pytest
 .cache/
