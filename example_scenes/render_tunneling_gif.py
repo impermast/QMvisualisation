@@ -4,16 +4,20 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
+import sys
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from core.quantum_state import PlaneWaveState
 from core.quantum_system import PotentialStep
 from core.state_evolution import ScatteringEvolution
 
-
-ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = ROOT / "media" / "generated_gifs"
 OUTPUT_PATH = OUTPUT_DIR / "tunneling_step_mvp.gif"
 
