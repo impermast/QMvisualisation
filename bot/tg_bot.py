@@ -90,6 +90,15 @@ class tg:
             print(f"Ошибка при отправке видео: {e}")
         except FileNotFoundError:
             print(f"Видео не найдено по пути: {video_path}")
+
+    async def send_telegram_document(self, file_path, caption=None):
+        try:
+            with open(file_path, 'rb') as file_obj:
+                await self.bot.send_document(chat_id=self.chat_id, document=file_obj, caption=caption)
+        except telegram.error.TelegramError as e:
+            print(f"Ошибка при отправке файла: {e}")
+        except FileNotFoundError:
+            print(f"Файл не найден по пути: {file_path}")
  
 
 

@@ -8,6 +8,7 @@ __pycache__/
 venv/
 env/
 *.env
+.pip-cache/
 
 # IDE/Editor config files
 .vscode/
