@@ -16,11 +16,13 @@ env/
 *.sublime-project
 *.sublime-workspace
 
-# Manim specific
-media/videos/1080p60/partial_movie_files/
+# Manim specific generated artifacts
+media/videos/
+media/generated_gifs/
 media/images/
 media/Tex/
 media/texts/
+media/tmp/
 *.log
 
 # Pango (если используется для шрифтов или других файлов)
